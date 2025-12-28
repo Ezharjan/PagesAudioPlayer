@@ -1,4 +1,4 @@
-# Motivation Everyday - Audio Player
+# (Github) Pages Audio Player
 
 A simple, user-friendly web-based audio player for motivational audio files, hosted on GitHub Pages.
 
