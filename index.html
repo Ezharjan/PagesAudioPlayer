@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motivation Everyday - Audio Player</title>
+    <link rel="icon" href="data:,">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+        }
+        .audio-player {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        .audio-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 8px 12px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .play-pause {
+            font-size: 16px;
+        }
+        .progress-container {
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 5px;
+            height: 8px;
+            margin-bottom: 10px;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: #4CAF50;
+            border-radius: 5px;
+            width: 0%;
+        }
+        .time-display {
+            font-size: 12px;
+            color: #666;
+        }
+        .volume-container {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .volume-slider {
+            width: 80px;
+        }
+        .loop-toggle {
+            background-color: #2196F3;
+        }
+        .loop-toggle.active {
+            background-color: #1976D2;
+        }
+        #audio-list {
+            max-height: 600px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            background-color: #fafafa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Motivation Everyday</h1>
+        <p>Welcome to our collection of motivational audio files. Click play to start listening!</p>
+        
+        <div id="audio-list">
+            <!-- Audio players will be dynamically added here -->
+        </div>
+        
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const audioList = document.getElementById('audio-list');
+            // const owner = 'YOUR_GITHUB_USERNAME'; // Replace with your GitHub username
+            const owner = 'Ezharjan'; // Replace with your GitHub username
+            const repo = 'PagesAudioPlayer'; // Replace with your repository name
+            
+            fetch(`https://api.github.com/repos/${owner}/${repo}/contents/assets`)
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(item => {
+                        if (item.type === 'file' && isAudioFile(item.name)) {
+                            const player = createAudioPlayer(item.name);
+                            audioList.appendChild(player);
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching audio files:', error);
+                    // Fallback: show a message or hardcoded if needed
+                    audioList.innerHTML = '<p>Unable to load audio files. Please check the repository settings.</p>';
+                });
+            
+            function isAudioFile(filename) {
+                const audioExtensions = ['mp3', 'wav', 'ogg', 'm4a', 'aac'];
+                const ext = filename.split('.').pop().toLowerCase();
+                return audioExtensions.includes(ext);
+            }
+            
+            function createAudioPlayer(filename) {
+                const title = filename.replace(/\.[^/.]+$/, "").replace(/_/g, " "); // Remove extension and replace underscores with spaces
+                const src = `assets/${filename}`;
+                
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'audio-player';
+                playerDiv.innerHTML = `
+                    <div class="audio-title">${title}</div>
+                    <audio preload="metadata">
+                        <source src="${src}" type="audio/mpeg">
+                        Your browser does not support the audio element.
+                    </audio>
+                    <div class="controls">
+                        <button class="play-pause">Play</button>
+                        <button class="loop-toggle">Loop Off</button>
+                        <div class="volume-container">
+                            <span>🔊</span>
+                            <input type="range" class="volume-slider" min="0" max="1" step="0.1" value="1">
+                        </div>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar"></div>
+                    </div>
+                    <div class="time-display">0:00 / 0:00</div>
+                `;
+                
+                // Add event listeners
+                const audio = playerDiv.querySelector('audio');
+                const playPauseBtn = playerDiv.querySelector('.play-pause');
+                const loopBtn = playerDiv.querySelector('.loop-toggle');
+                const volumeSlider = playerDiv.querySelector('.volume-slider');
+                const progressBar = playerDiv.querySelector('.progress-bar');
+                const progressContainer = playerDiv.querySelector('.progress-container');
+                const timeDisplay = playerDiv.querySelector('.time-display');
+                
+                // Play/Pause
+                playPauseBtn.addEventListener('click', function() {
+                    if (audio.paused) {
+                        audio.play();
+                        playPauseBtn.textContent = 'Pause';
+                    } else {
+                        audio.pause();
+                        playPauseBtn.textContent = 'Play';
+                    }
+                });
+                
+                // Loop toggle
+                loopBtn.addEventListener('click', function() {
+                    audio.loop = !audio.loop;
+                    loopBtn.textContent = audio.loop ? 'Loop On' : 'Loop Off';
+                    loopBtn.classList.toggle('active', audio.loop);
+                });
+                
+                // Volume
+                volumeSlider.addEventListener('input', function() {
+                    audio.volume = this.value;
+                });
+                
+                // Progress bar
+                audio.addEventListener('timeupdate', function() {
+                    const progress = (audio.currentTime / audio.duration) * 100;
+                    progressBar.style.width = progress + '%';
+                    timeDisplay.textContent = formatTime(audio.currentTime) + ' / ' + formatTime(audio.duration);
+                });
+                
+                // Click on progress bar to seek
+                progressContainer.addEventListener('click', function(e) {
+                    const rect = this.getBoundingClientRect();
+                    const clickX = e.clientX - rect.left;
+                    const percentage = clickX / rect.width;
+                    audio.currentTime = percentage * audio.duration;
+                });
+                
+                // Reset play button when audio ends
+                audio.addEventListener('ended', function() {
+                    if (!audio.loop) {
+                        playPauseBtn.textContent = 'Play';
+                    }
+                });
+                
+                return playerDiv;
+            }
+            
+            function formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = Math.floor(seconds % 60);
+                return mins + ':' + (secs < 10 ? '0' : '') + secs;
+            }
+        });
+    </script>
+</body>
+</html>
